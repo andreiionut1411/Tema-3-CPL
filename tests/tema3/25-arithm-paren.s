@@ -168,6 +168,11 @@ int_const7:
     .word 4
     .word Int_dispTab
     .word 18
+int_const8:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 12
 bool_const0:
     .word   4
     .word   4
@@ -695,6 +700,41 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
+    la $a0 int_const3
+    jal     Object.copy
+    lw      $t1 12($a0)     # int slot
+    neg     $t1 $t1
+    sw      $t1 12($a0)     # int slot
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    la $a0 int_const4
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    la $a0 int_const8
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    la $a0 int_const1
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    div $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    sub $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    mul $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

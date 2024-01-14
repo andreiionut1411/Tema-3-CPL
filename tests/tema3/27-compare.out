@@ -6,10 +6,10 @@ Loaded: trap.handler.nogc
 The following symbols are undefined:
 main
 
-268501748
-ô268501748
-ô268501748
-ô268501748
-ô268501748
-ô268501748
-ôCOOL program successfully executed
+OK
+OK
+failed
+failed
+failed
+OK
+COOL program successfully executed

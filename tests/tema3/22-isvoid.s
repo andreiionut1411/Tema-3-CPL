@@ -128,6 +128,34 @@ str_const15:
     .asciiz "
 "
     .align 2
+str_const16:
+    .word 3
+    .word 6
+    .word String_dispTab
+    .word int_const1
+    .asciiz "x void"
+    .align 2
+str_const17:
+    .word 3
+    .word 7
+    .word String_dispTab
+    .word int_const8
+    .asciiz "x not void"
+    .align 2
+str_const18:
+    .word 3
+    .word 7
+    .word String_dispTab
+    .word int_const9
+    .asciiz "self void"
+    .align 2
+str_const19:
+    .word 3
+    .word 8
+    .word String_dispTab
+    .word int_const10
+    .asciiz "self not void"
+    .align 2
 int_const0:
     .word 2
     .word 4
@@ -168,6 +196,21 @@ int_const7:
     .word 4
     .word Int_dispTab
     .word 12
+int_const8:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 10
+int_const9:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 9
+int_const10:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 13
 bool_const0:
     .word   4
     .word   4
@@ -695,6 +738,19 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
+    lw $a0 20($s0)
+    move    $t1 $a0
+    la      $a0 bool_const1
+    beqz    $t1 isvoid0
+    la      $a0 bool_const0
+isvoid0:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else1
+    la $a0 str_const16
+    b       endif1
+else1:
+    la $a0 str_const17
+endif1:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -706,7 +762,19 @@ dispatch4:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    move $a0 $s0
+    move    $t1 $a0
+    la      $a0 bool_const1
+    beqz    $t1 isvoid2
+    la      $a0 bool_const0
+isvoid2:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else3
+    la $a0 str_const18
+    b       endif3
+else3:
+    la $a0 str_const19
+endif3:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

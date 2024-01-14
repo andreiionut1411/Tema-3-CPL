@@ -700,6 +700,17 @@ Main.main:
     sw $a0 -4($fp)
     la $a0 int_const2
     sw $a0 -8($fp)
+    lw $a0 -4($fp)
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    lw $a0 -8($fp)
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    add $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

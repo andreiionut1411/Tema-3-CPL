@@ -31,6 +31,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     HashMap<String, Integer> localsOffsetTable = null; // Name of the local -> offset
     int dispatchLabelNumber = 0;
     int numberOfLocalVariables = 0;
+    int iffId = 0;
     boolean storeAttribute = false; // In case we need to store at the ID we make it true. If we need to load the value from ID, we make it false
 
     private void populateGenericFuncTable(String className) {
@@ -380,22 +381,67 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(BinaryOp binaryOp) {
+        switch (binaryOp.op.getText())
+        {
+            case "+" -> {
+                 return templates.getInstanceOf("plus")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this));
+            }
+            case "-" -> {
+                return templates.getInstanceOf("minus")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this));
+            }
+            case "*" -> {
+                return templates.getInstanceOf("mult")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this));
+            }
+            case "/" -> {
+                return templates.getInstanceOf("div")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this));
+            }
+            case "=" -> {
+                return templates.getInstanceOf("eq")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this))
+                        .add("id", ++iffId);
+            }
+            case "<" -> {
+                return templates.getInstanceOf("lt")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this))
+                        .add("id", ++iffId);
+            }
+            case "<=" -> {
+                return templates.getInstanceOf("le")
+                        .add("e1", binaryOp.lhs.accept(this))
+                        .add("e2", binaryOp.rhs.accept(this))
+                        .add("id", ++iffId);
+            }
+        }
         return null;
     }
 
     @Override
     public ST visit(NegativeInt negativeInt) {
-        return null;
+        return templates.getInstanceOf("unaryMinus").add("e1", negativeInt.e.accept(this));
     }
 
     @Override
     public ST visit(Paren paren) {
-        return null;
+        return paren.e.accept(this);
     }
 
     @Override
     public ST visit(Not nnot) {
-        return null;
+        var st = templates.getInstanceOf("nott");
+        st.add("expr", nnot.e.accept(this))
+                .add("id", this.iffId);
+        this.iffId += 1;
+        return st;
     }
 
     @Override
@@ -427,7 +473,11 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(IsVoid isVoid) {
-        return null;
+        var st = templates.getInstanceOf("isVoid");
+        st.add("expr", isVoid.e.accept(this))
+                .add("id", this.iffId);
+        this.iffId += 1;
+        return st;
     }
 
     @Override
@@ -482,7 +532,13 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(If iff) {
-        return null;
+        var st = templates.getInstanceOf("iff");
+        st.add("condition", iff.cond.accept(this))
+                .add("thenBranch", iff.ifBranch.accept(this))
+                .add("elseBranch", iff.elseBranch.accept(this))
+                .add("id", this.iffId);
+        this.iffId += 1;
+        return st;
     }
 
     @Override

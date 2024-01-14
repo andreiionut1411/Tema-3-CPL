@@ -128,6 +128,20 @@ str_const15:
     .asciiz "
 "
     .align 2
+str_const16:
+    .word 3
+    .word 5
+    .word String_dispTab
+    .word int_const2
+    .asciiz "OK"
+    .align 2
+str_const17:
+    .word 3
+    .word 6
+    .word String_dispTab
+    .word int_const1
+    .asciiz "failed"
+    .align 2
 int_const0:
     .word 2
     .word 4
@@ -168,6 +182,11 @@ int_const7:
     .word 4
     .word Int_dispTab
     .word 13
+int_const8:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 5
 bool_const0:
     .word   4
     .word   4
@@ -695,6 +714,25 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
+    la $a0 int_const3
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const8
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    blt     $t1 $t2 compare1
+    la      $a0 bool_const0
+compare1:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else1
+    la $a0 str_const16
+    b       endif1
+else1:
+    la $a0 str_const17
+endif1:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -706,7 +744,25 @@ dispatch4:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 int_const3
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const8
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    ble     $t1 $t2 compare3
+    la      $a0 bool_const0
+compare3:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else3
+    la $a0 str_const16
+    b       endif3
+else3:
+    la $a0 str_const17
+endif3:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -718,7 +774,25 @@ dispatch5:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 int_const8
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const3
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    blt     $t1 $t2 compare5
+    la      $a0 bool_const0
+compare5:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else5
+    la $a0 str_const16
+    b       endif5
+else5:
+    la $a0 str_const17
+endif5:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -730,7 +804,25 @@ dispatch6:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 int_const8
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const3
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    ble     $t1 $t2 compare7
+    la      $a0 bool_const0
+compare7:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else7
+    la $a0 str_const16
+    b       endif7
+else7:
+    la $a0 str_const17
+endif7:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -742,7 +834,25 @@ dispatch7:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 int_const3
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const3
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    blt     $t1 $t2 compare9
+    la      $a0 bool_const0
+compare9:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else9
+    la $a0 str_const16
+    b       endif9
+else9:
+    la $a0 str_const17
+endif9:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -754,7 +864,25 @@ dispatch8:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 int_const3
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const3
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    ble     $t1 $t2 compare11
+    la      $a0 bool_const0
+compare11:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else11
+    la $a0 str_const16
+    b       endif11
+else11:
+    la $a0 str_const17
+endif11:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

@@ -128,6 +128,20 @@ str_const15:
     .asciiz "
 "
     .align 2
+str_const16:
+    .word 3
+    .word 5
+    .word String_dispTab
+    .word int_const2
+    .asciiz "OK"
+    .align 2
+str_const17:
+    .word 3
+    .word 6
+    .word String_dispTab
+    .word int_const1
+    .asciiz "failed"
+    .align 2
 int_const0:
     .word 2
     .word 4
@@ -726,7 +740,19 @@ dispatch5:
     lw $t1 8($a0) # dispatch table
     lw $t1 16($t1) # method offset
     jalr $t1
-
+    lw $a0 -12($fp)
+    move    $t1 $a0
+    la      $a0 bool_const1
+    beqz    $t1 isvoid0
+    la      $a0 bool_const0
+isvoid0:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else1
+    la $a0 str_const16
+    b       endif1
+else1:
+    la $a0 str_const17
+endif1:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

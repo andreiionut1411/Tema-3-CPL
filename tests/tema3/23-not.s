@@ -128,6 +128,34 @@ str_const15:
     .asciiz "
 "
     .align 2
+str_const16:
+    .word 3
+    .word 5
+    .word String_dispTab
+    .word int_const3
+    .asciiz "NO1"
+    .align 2
+str_const17:
+    .word 3
+    .word 6
+    .word String_dispTab
+    .word int_const4
+    .asciiz "YES1"
+    .align 2
+str_const18:
+    .word 3
+    .word 5
+    .word String_dispTab
+    .word int_const3
+    .asciiz "NO2"
+    .align 2
+str_const19:
+    .word 3
+    .word 6
+    .word String_dispTab
+    .word int_const4
+    .asciiz "YES2"
+    .align 2
 int_const0:
     .word 2
     .word 4
@@ -695,6 +723,19 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
+    la $a0 bool_const1
+    lw      $t1 12($a0)     # bool slot
+    la      $a0 bool_const1
+    beqz    $t1 not0
+    la      $a0 bool_const0
+not0:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else1
+    la $a0 str_const16
+    b       endif1
+else1:
+    la $a0 str_const17
+endif1:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
@@ -706,7 +747,19 @@ dispatch4:
     lw $t1 8($a0) # dispatch table
     lw $t1 12($t1) # method offset
     jalr $t1
-
+    la $a0 bool_const0
+    lw      $t1 12($a0)     # bool slot
+    la      $a0 bool_const1
+    beqz    $t1 not2
+    la      $a0 bool_const0
+not2:
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else3
+    la $a0 str_const18
+    b       endif3
+else3:
+    la $a0 str_const19
+endif3:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0
