@@ -332,12 +332,12 @@ public class DefinitionPassVisitor implements ASTVisitor {
                         " has undefined type " + ccase.branchTypes.get(i).getText());
             }
 
+            Scope oldScope = crtScope;
+            crtScope = new DefaultScope(crtScope);
             IdSymbol sym = new IdSymbol(ccase.branchNames.get(i).token.getText());
             crtScope.add(sym);
             sym.setType((ClassSymbol) SymbolTable.globals.idLookup(ccase.branchTypes.get(i).getText()));
 
-            Scope oldScope = crtScope;
-            crtScope = new DefaultScope(crtScope);
             ccase.branchNames.get(i).setSymbol(sym);
             ccase.branchNames.get(i).setScope(crtScope);
             ccase.results.get(i).accept(this);
