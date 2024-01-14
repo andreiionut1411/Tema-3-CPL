@@ -543,7 +543,11 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(While wwhile) {
-        return null;
+
+        return templates.getInstanceOf("while")
+                .add("condition", wwhile.cond.accept(this))
+                .add("body", wwhile.loopExpr.accept(this))
+                .add("id", ++iffId);
     }
 
     @Override
@@ -593,7 +597,24 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(Case ccase) {
-        return null;
+        var mainCaseSt = templates.getInstanceOf("case");
+        mainCaseSt.add("expr", ccase.e.accept(this))
+                .add("id", ++iffId);
+
+        StringBuilder bodies = new StringBuilder();
+        for (int i = 0; i < ccase.branchTypes.size(); i++) {
+            var caseBranchSt = templates.getInstanceOf("caseBody");
+            var classLabel = invObjNameTable.get(ccase.branchTypes.get(i).getText());
+
+            caseBranchSt.add("body", ccase.results.get(i).accept(this))
+                    .add("classTag", classLabel)
+                    .add("id", ++iffId);
+
+            bodies.append(caseBranchSt.render());
+        }
+        mainCaseSt.add("bodies", bodies.toString());
+
+        return mainCaseSt;
     }
 
     @Override

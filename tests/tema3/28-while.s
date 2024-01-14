@@ -182,6 +182,11 @@ int_const7:
     .word 4
     .word Int_dispTab
     .word 11
+int_const8:
+    .word 2
+    .word 4
+    .word Int_dispTab
+    .word 10
 bool_const0:
     .word   4
     .word   4
@@ -714,7 +719,48 @@ Main.main:
     sw $a0 -4($fp)
     la $a0 int_const0
     sw $a0 -8($fp)
-
+while2:
+    lw $a0 -4($fp)
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+    la $a0 int_const8
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    ble     $t1 $t2 compare1
+    la      $a0 bool_const0
+compare1:
+    lw      $t1 12($a0)     # bool slot
+    beqz    $t1 endwhile2
+    lw $a0 -8($fp)
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    lw $a0 -4($fp)
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    add $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+    sw $a0 -8($fp)
+    lw $a0 -4($fp)
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+    la $a0 int_const5
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    add $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+    sw $a0 -4($fp)
+    b       while2
+endwhile2:
+    move    $a0 $zero
     sw $a0 -12($fp)
     lw $a0 -8($fp)
     sw $a0 0($sp)
@@ -743,16 +789,16 @@ dispatch5:
     lw $a0 -12($fp)
     move    $t1 $a0
     la      $a0 bool_const1
-    beqz    $t1 isvoid0
+    beqz    $t1 isvoid2
     la      $a0 bool_const0
-isvoid0:
+isvoid2:
     lw $t1 12($a0)     # bool slot
-    beqz $t1 else1
+    beqz $t1 else3
     la $a0 str_const16
-    b       endif1
-else1:
+    b       endif3
+else3:
     la $a0 str_const17
-endif1:
+endif3:
     sw $a0 0($sp)
     addiu $sp $sp -4
     move $a0 $s0

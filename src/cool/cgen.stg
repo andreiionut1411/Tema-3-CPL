@@ -494,3 +494,40 @@ le(e1, e2, id) ::= <<
     la      $a0 bool_const0
 compare<id>:
 >>
+
+while(condition, body, id) ::= <<
+while<id>:
+<condition>
+    lw      $t1 12($a0)     # bool slot
+    beqz    $t1 endwhile<id>
+<body>
+    b       while<id>
+endwhile<id>:
+    move    $a0 $zero
+>>
+
+caseBody(body, classTag, id) ::= <<
+    sw      $a0 -4($fp)
+    lw      $t1 0($a0)      # class tag
+    blt     $t1 <classTag> casebranch<id>
+    bgt     $t1 <classTag> casebranch<id>
+    lw      $a0 -4($fp)
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<body>
+    b       endcase<id>
+casebranch<id>:
+>>
+
+case(expr, bodies, id) ::= <<
+    addiu   $sp $sp -4   # locals alloc
+    move    $s0 $a0
+<expr>
+    bnez    $a0 case<id>
+    la      $a0 str_const8
+    li      $t1 38
+    jal     _case_abort2
+case<id>:
+<bodies>
+endcase<id>:
+>>

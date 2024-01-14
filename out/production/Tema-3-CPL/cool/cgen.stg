@@ -494,3 +494,15 @@ le(e1, e2, id) ::= <<
     la      $a0 bool_const0
 compare<id>:
 >>
+
+while(condition, body, id) ::= <<
+while<id>:
+<condition>
+    lw      $t1 12($a0)     # bool slot
+    beqz    $t1 endwhile<id>
+<body>
+    b       while<id>
+endwhile<id>:
+    move    $a0 $zero
+>>
+
