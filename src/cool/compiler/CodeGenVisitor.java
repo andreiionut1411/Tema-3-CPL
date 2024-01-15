@@ -1,7 +1,6 @@
 package cool.compiler;
 import cool.parser.CoolParser;
 import cool.structures.ClassSymbol;
-import cool.structures.IdSymbol;
 import cool.structures.SymbolTable;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.Pair;
@@ -10,8 +9,11 @@ import org.stringtemplate.v4.STGroupFile;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.ceil;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 public class CodeGenVisitor implements ASTVisitor<ST>{
     static STGroupFile templates = new STGroupFile("cool/cgen.stg");
@@ -31,8 +33,10 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     HashMap<String, Integer> localsOffsetTable = null; // Name of the local -> offset
     int dispatchLabelNumber = 0;
     int numberOfLocalVariables = 0;
-    int iffId = 0;
+    int labelID = 0;
     boolean storeAttribute = false; // In case we need to store at the ID we make it true. If we need to load the value from ID, we make it false
+
+    String fileName;
 
     private void populateGenericFuncTable(String className) {
         ClassSymbol sym = (ClassSymbol) SymbolTable.globals.idLookup(className);
@@ -105,6 +109,12 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         invStrTable.put("String", 4);
         invStrTable.put("Bool", 5);
 
+        invObjNameTable.put("Object", 0);
+        invObjNameTable.put("IO", 1);
+        invObjNameTable.put("Int", 2);
+        invObjNameTable.put("String", 3);
+        invObjNameTable.put("Bool", 4);
+
         populateFuncTables();
 
         // We add all the offsets for the attributes and functions in a big map for later use
@@ -165,14 +175,13 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
             invIntTable.put(sym.getName().length(), invIntTable.size());
         }
 
-        var crtClass = sym;
-        int numberOfPrevAttributes = crtClass.numberOfPrevAttributes;
+        int numberOfPrevAttributes = sym.numberOfPrevAttributes;
         var protoDef = templates.getInstanceOf("defineProto");
         var functionTable = templates.getInstanceOf("defineFuncTables").add("className", coolClass.type.getText());
         var initsST = templates.getInstanceOf("initClass");
 
-        for (var attr: crtClass.attrOffsetTable.keySet()) {
-            String type = crtClass.attrOffsetTable.get(attr).b;
+        for (var attr: sym.attrOffsetTable.keySet()) {
+            String type = sym.attrOffsetTable.get(attr).b;
 
             if (type.equals("Int")) {
                 protoDef.add("attributes", "int_const0");
@@ -185,8 +194,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
             }
         }
 
-        for (var func: crtClass.functionOffsetTable.keySet()) {
-            functionTable.add("functionName", crtClass.functionOffsetTable.get(func).b + "." + func);
+        for (var func: sym.functionOffsetTable.keySet()) {
+            functionTable.add("functionName", sym.functionOffsetTable.get(func).b + "." + func);
         }
 
         initsST.add("className", crtClassName)
@@ -203,7 +212,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         }
 
         programST.add("classInits", initsST);
-        protoDef.add("objName", sym.getName()).add("objNumber", classIndex).add("size", crtClass.attrOffsetTable.size() + 3);
+        protoDef.add("objName", sym.getName()).add("objNumber", classIndex).add("size", sym.attrOffsetTable.size() + 3);
         programST.add("protoDefinitions", protoDef);
         programST.add("classTables", functionTable);
 
@@ -367,16 +376,14 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(CoolTrue coolTrue) {
-        var st = templates.getInstanceOf("literal")
+        return templates.getInstanceOf("literal")
                 .add("constant", "bool_const1");
-        return st;
     }
 
     @Override
     public ST visit(CoolFalse coolFalse) {
-        var st = templates.getInstanceOf("literal")
+        return templates.getInstanceOf("literal")
                 .add("constant", "bool_const0");
-        return st;
     }
 
     @Override
@@ -407,19 +414,19 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
                 return templates.getInstanceOf("eq")
                         .add("e1", binaryOp.lhs.accept(this))
                         .add("e2", binaryOp.rhs.accept(this))
-                        .add("id", ++iffId);
+                        .add("id", ++labelID);
             }
             case "<" -> {
                 return templates.getInstanceOf("lt")
                         .add("e1", binaryOp.lhs.accept(this))
                         .add("e2", binaryOp.rhs.accept(this))
-                        .add("id", ++iffId);
+                        .add("id", ++labelID);
             }
             case "<=" -> {
                 return templates.getInstanceOf("le")
                         .add("e1", binaryOp.lhs.accept(this))
                         .add("e2", binaryOp.rhs.accept(this))
-                        .add("id", ++iffId);
+                        .add("id", ++labelID);
             }
         }
         return null;
@@ -439,8 +446,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     public ST visit(Not nnot) {
         var st = templates.getInstanceOf("nott");
         st.add("expr", nnot.e.accept(this))
-                .add("id", this.iffId);
-        this.iffId += 1;
+                .add("id", this.labelID);
+        this.labelID += 1;
         return st;
     }
 
@@ -475,8 +482,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     public ST visit(IsVoid isVoid) {
         var st = templates.getInstanceOf("isVoid");
         st.add("expr", isVoid.e.accept(this))
-                .add("id", this.iffId);
-        this.iffId += 1;
+                .add("id", this.labelID);
+        this.labelID += 1;
         return st;
     }
 
@@ -492,7 +499,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
                 ctx = ctx.getParent();
         }
 
-        String fileName = new File(Compiler.fileNames.get(ctx)).getName();
+        fileName = new File(Compiler.fileNames.get(ctx)).getName();
 
         addNewStrConst(fileName);
 
@@ -536,8 +543,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         st.add("condition", iff.cond.accept(this))
                 .add("thenBranch", iff.ifBranch.accept(this))
                 .add("elseBranch", iff.elseBranch.accept(this))
-                .add("id", this.iffId);
-        this.iffId += 1;
+                .add("id", this.labelID);
+        this.labelID += 1;
         return st;
     }
 
@@ -547,7 +554,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         return templates.getInstanceOf("while")
                 .add("condition", wwhile.cond.accept(this))
                 .add("body", wwhile.loopExpr.accept(this))
-                .add("id", ++iffId);
+                .add("id", ++labelID);
     }
 
     @Override
@@ -597,22 +604,83 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(Case ccase) {
+        int endCaseId = ++labelID;
+
+        // Hacky as hell, but sometimes a case can be called without a function and the only thing that
+        // is a declaration context would be the class the function the case is called in.
+        fileName = new File(Compiler.fileNames.get(ccase.ctx.getParent().getParent())).getName();
+        addNewStrConst(fileName);
+        var fileNameID = invStrTable.get(fileName);
+
+        // Save previous locals and parse current case locals
+        var prevLocals = localsOffsetTable;
+        localsOffsetTable = new HashMap<>();
+
+        for (int i = 0; i < ccase.branchNames.size(); i++) {
+            // Hack due to the way case works, the same variable is saved at the same location
+            // and is merely interpreted as being different by the case
+            localsOffsetTable.put(ccase.branchNames.get(i).token.getText(), -4);
+            numberOfLocalVariables++;
+        }
+
+        // Holds the StringBuilder and the difference between the class tags
+        // so that we can later sort by specificity
+        ArrayList<Pair<StringBuilder, Integer>> bodies = new ArrayList<>();
+        for (int i = 0; i < ccase.branchTypes.size(); i++)
+        {
+            var className = ccase.branchTypes.get(i).getText();
+
+            var minClassLabel = invObjNameTable.get(className);
+            var maxClassLabel = 0;
+
+            for (Map.Entry<String, Integer> entry : invObjNameTable.entrySet())
+            {
+                String childName = entry.getKey();
+                Integer classTag = entry.getValue();
+
+                ClassSymbol sym = (ClassSymbol) SymbolTable.globals.idLookup(childName);
+                if (sym.getParent() == null)
+                    continue;
+
+                // Check all the way down for a matching class that inherits
+                // the class we are currently checking
+                var p = sym;
+                while (p != null)
+                {
+                    if (Objects.equals(p.getName(), className))
+                    {
+                        minClassLabel = min(minClassLabel, classTag);
+                        maxClassLabel = max(maxClassLabel, classTag);
+                    }
+                    p = (ClassSymbol) p.getParent();
+                }
+            }
+
+            var caseBranchSt = templates.getInstanceOf("caseBody");
+            caseBranchSt.add("body", ccase.results.get(i).accept(this))
+                    .add("classTagMin", minClassLabel)
+                    .add("classTagMax", maxClassLabel)
+                    .add("id", ++labelID)
+                    .add("endCaseID", endCaseId);
+
+            bodies.add(new Pair<>(new StringBuilder(caseBranchSt.render()), maxClassLabel - minClassLabel));
+        }
+
+        // Sort the case branches by their specificity (how specific their branch is)
+        bodies.sort(Comparator.comparingInt(o -> o.b));
+        String result = bodies.stream().map(pair -> pair.a.toString()).collect(Collectors.joining());
+
+        // Reset locals
+        numberOfLocalVariables = 0;
+        localsOffsetTable = prevLocals;
+
         var mainCaseSt = templates.getInstanceOf("case");
         mainCaseSt.add("expr", ccase.e.accept(this))
-                .add("id", ++iffId);
-
-        StringBuilder bodies = new StringBuilder();
-        for (int i = 0; i < ccase.branchTypes.size(); i++) {
-            var caseBranchSt = templates.getInstanceOf("caseBody");
-            var classLabel = invObjNameTable.get(ccase.branchTypes.get(i).getText());
-
-            caseBranchSt.add("body", ccase.results.get(i).accept(this))
-                    .add("classTag", classLabel)
-                    .add("id", ++iffId);
-
-            bodies.append(caseBranchSt.render());
-        }
-        mainCaseSt.add("bodies", bodies.toString());
+                .add("id", ++labelID)
+                .add("endCaseID", endCaseId)
+                .add("fileNameID", fileNameID)
+                .add("line", ccase.e.token.getLine())
+                .add("bodies", result);
 
         return mainCaseSt;
     }

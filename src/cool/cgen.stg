@@ -506,28 +506,29 @@ endwhile<id>:
     move    $a0 $zero
 >>
 
-caseBody(body, classTag, id) ::= <<
-    sw      $a0 -4($fp)
-    lw      $t1 0($a0)      # class tag
-    blt     $t1 <classTag> casebranch<id>
-    bgt     $t1 <classTag> casebranch<id>
-    lw      $a0 -4($fp)
-    sw      $a0 0($sp)
-    addiu   $sp $sp -4
+caseBody(body, classTagMin, classTagMax, id, endCaseID) ::= <<
+    blt     $t1 <classTagMin> casebranch<id>
+    bgt     $t1 <classTagMax> casebranch<id>
 <body>
-    b       endcase<id>
+    b       endcase<endCaseID>
 casebranch<id>:
+
 >>
 
-case(expr, bodies, id) ::= <<
+case(expr, bodies, id, endCaseID, fileNameID, line) ::= <<
     addiu   $sp $sp -4   # locals alloc
     move    $s0 $a0
 <expr>
     bnez    $a0 case<id>
-    la      $a0 str_const8
-    li      $t1 38
+    la      $a0 str_const<fileNameID>
+    li      $t1 <line>
     jal     _case_abort2
 case<id>:
+    sw      $a0 -4($fp)
+    lw      $t1 0($a0)      # class tag
 <bodies>
-endcase<id>:
+    lw      $a0 -4($fp)
+    jal     _case_abort
+endcase<endCaseID>:
+    addiu   $sp $sp 4    # locals free
 >>
