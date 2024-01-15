@@ -1,4 +1,4 @@
-// Generated from C:/Andrei/CPL/Tema 2/Parser-skel/src/cool/lexer/CoolLexer.g4 by ANTLR 4.13.1
+// Generated from C:/Andrei/CPL/Tema 1/Tema 1/Parser-skel-IntelliJ/Parser-skel/src/cool/lexer/CoolLexer.g4 by ANTLR 4.13.1
 
     package cool.lexer;	
 
