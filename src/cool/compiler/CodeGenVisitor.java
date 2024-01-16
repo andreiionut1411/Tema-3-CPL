@@ -32,6 +32,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     int dispatchLabelNumber = 0;
     int numberOfLocalVariables = 0;
     int labelID = 0;
+    int localOffset = 0;
     boolean storeAttribute = false; // In case we need to store at the ID we make it true. If we need to load the value from ID, we make it false
 
     String fileName;
@@ -572,12 +573,14 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
                 init = templates.getInstanceOf("literal").add("constant", "str_const0");
             } else if (local.type.getText().equals("Bool")) {
                 init = templates.getInstanceOf("literal").add("constant", "bool_const0");
+            } else {
+                init = templates.getInstanceOf("initEmpty");
             }
         } else {
             init = local.assign.accept(this);
         }
 
-        st.add("initialization", init).add("offset", localsOffsetTable.get(local.name.token.getText()));
+        st.add("initialization", init).add("offset", localOffset);
 
         return st;
     }
@@ -588,7 +591,6 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         var inits = templates.getInstanceOf("sequence");
         var prevLocals = localsOffsetTable;
         int offset = -1;
-        int letNewVars = 0;
 
         localsOffsetTable = new HashMap<>();
 
@@ -598,15 +600,15 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         }
 
         for (int i = 0; i < let.locals.size(); i++) {
+            localOffset = offset * 4;
+            inits.add("e", let.locals.get(i).accept(this));
             localsOffsetTable.put(let.locals.get(i).name.token.getText(), offset * 4);
 
             if (abs(offset) > numberOfLocalVariables) {
                 numberOfLocalVariables++;
-                letNewVars++;
             }
 
             offset--;
-            inits.add("e", let.locals.get(i).accept(this));
         }
 
         st.add("inits", inits);

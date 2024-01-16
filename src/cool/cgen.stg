@@ -534,3 +534,7 @@ case<id>:
     jal     _case_abort
 endcase<endCaseID>:
 >>
+
+initEmpty() ::= <<
+    move    $a0 $zero
+>>
