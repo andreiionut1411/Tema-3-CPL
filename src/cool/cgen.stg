@@ -241,13 +241,14 @@ initClass(className, parent, attr) ::= <<
 
 >>
 
-defineFunction(name, body, removeParams, removeLocals) ::= <<
+defineFunction(name, body, removeParams, removeLocals, initLocals) ::= <<
 <name>:
     addiu $sp $sp -12
     sw $fp 12($sp)
     sw $s0 8($sp)
     sw $ra 4($sp)
     addiu $fp $sp 4
+<initLocals>
     move $s0 $a0
 <body>
 <removeLocals>
@@ -258,6 +259,10 @@ defineFunction(name, body, removeParams, removeLocals) ::= <<
 <removeParams>
     jr $ra
 
+>>
+
+init_locals(offset) ::= <<
+    addiu $sp $sp <offset> # locals alloc
 >>
 
 freeParams(offset, name) ::= <<
@@ -325,8 +330,7 @@ assign(storeValue, value) ::= <<
 <storeValue>
 >>
 
-let(localsOffset, inits, body) ::= <<
-    addiu $sp $sp -<localsOffset> # let locals alloc
+let(inits, body) ::= <<
 <inits>
 <body>
 >>
@@ -515,8 +519,7 @@ casebranch<id>:
 
 >>
 
-case(expr, bodies, id, endCaseID, fileNameID, line, alloc) ::= <<
-<alloc>
+case(expr, bodies, id, endCaseID, fileNameID, line) ::= <<
     move    $s0 $a0
 <expr>
     bnez    $a0 case<id>
@@ -530,8 +533,4 @@ case<id>:
     lw      $a0 -4($fp)
     jal     _case_abort
 endcase<endCaseID>:
->>
-
-alloc_case() ::= <<
-    addiu $sp $sp -4 # case locals alloc
 >>

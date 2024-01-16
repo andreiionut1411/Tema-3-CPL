@@ -265,6 +265,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         if (numberOfLocalVariables > 0) {
             funcDef.add("removeLocals",
                     templates.getInstanceOf("freeParams").add("offset", numberOfLocalVariables * 4).add("name", "locals"));
+            funcDef.add("initLocals",
+                    templates.getInstanceOf("init_locals").add("offset", -numberOfLocalVariables * 4));
         }
 
         programST.add("textFuncs", funcDef);
@@ -607,7 +609,6 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
             inits.add("e", let.locals.get(i).accept(this));
         }
 
-        st.add("localsOffset", letNewVars * 4);
         st.add("inits", inits);
         st.add("body", let.e.accept(this));
         localsOffsetTable = prevLocals;
@@ -651,7 +652,6 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
             if (abs(offset) > numberOfLocalVariables) {
                 numberOfLocalVariables++;
-                mainCaseSt.add("alloc", templates.getInstanceOf("alloc_case"));
             }
         }
 
