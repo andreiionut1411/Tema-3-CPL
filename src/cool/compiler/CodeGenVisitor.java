@@ -665,26 +665,33 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
             var minClassLabel = invObjNameTable.get(className);
             var maxClassLabel = 0;
 
-            for (Map.Entry<String, Integer> entry : invObjNameTable.entrySet())
+            // Band aid fix for matching Objects
+            // Since anything can be an object, just include all class tags
+            if (Objects.equals(className, "Object"))
             {
-                String childName = entry.getKey();
-                Integer classTag = entry.getValue();
+                minClassLabel = 0;
+                maxClassLabel = objNameTable.size() + 6;
+            }
 
-                ClassSymbol sym = (ClassSymbol) SymbolTable.globals.idLookup(childName);
-                if (sym.getParent() == null)
-                    continue;
+            else {
+                for (Map.Entry<String, Integer> entry : invObjNameTable.entrySet()) {
+                    String childName = entry.getKey();
+                    Integer classTag = entry.getValue();
 
-                // Check all the way down for a matching class that inherits
-                // the class we are currently checking
-                var p = sym;
-                while (p != null)
-                {
-                    if (Objects.equals(p.getName(), className))
-                    {
-                        minClassLabel = min(minClassLabel, classTag);
-                        maxClassLabel = max(maxClassLabel, classTag);
+                    ClassSymbol sym = (ClassSymbol) SymbolTable.globals.idLookup(childName);
+                    if (sym.getParent() == null)
+                        continue;
+
+                    // Check all the way down for a matching class that inherits
+                    // the class we are currently checking
+                    var p = sym;
+                    while (p != null) {
+                        if (Objects.equals(p.getName(), className)) {
+                            minClassLabel = min(minClassLabel, classTag);
+                            maxClassLabel = max(maxClassLabel, classTag);
+                        }
+                        p = (ClassSymbol) p.getParent();
                     }
-                    p = (ClassSymbol) p.getParent();
                 }
             }
 
