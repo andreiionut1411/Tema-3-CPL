@@ -874,7 +874,7 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
-    addiu $sp $sp -16
+    addiu $sp $sp -16 # let locals alloc
     la $a0 int_const6
     sw $a0 -4($fp)
     la $a0 int_const0

@@ -11,9 +11,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.lang.Math.ceil;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
+import static java.lang.Math.*;
 
 public class CodeGenVisitor implements ASTVisitor<ST>{
     static STGroupFile templates = new STGroupFile("cool/cgen.stg");
@@ -191,6 +189,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
                 protoDef.add("attributes", "bool_const0");
             } else if (type.startsWith("SELF_TYPE")) {
                 protoDef.add("attributes", "0");
+            } else {
+                protoDef.add("attributes", "0");
             }
         }
 
@@ -230,7 +230,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
             var attrST = templates.getInstanceOf("initAttr");
 
             attrST.add("expr", attribute.assign.accept(this))
-                .add("offset", attribute.offset);
+                    .add("offset", attribute.offset);
 
             return attrST;
         }
@@ -245,6 +245,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         int offset = 12;
 
         numberOfLocalVariables = 0;
+        localsOffsetTable = null;
         formalsOffsetTable = new HashMap<>();
 
         for (var formal: method.args) {
@@ -391,7 +392,7 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         switch (binaryOp.op.getText())
         {
             case "+" -> {
-                 return templates.getInstanceOf("plus")
+                return templates.getInstanceOf("plus")
                         .add("e1", binaryOp.lhs.accept(this))
                         .add("e2", binaryOp.rhs.accept(this));
             }
@@ -581,20 +582,32 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
 
     @Override
     public ST visit(Let let) {
-        var st = templates.getInstanceOf("let").add("localsOffset", let.locals.size() * 4);
+        var st = templates.getInstanceOf("let");
         var inits = templates.getInstanceOf("sequence");
         var prevLocals = localsOffsetTable;
         int offset = -1;
+        int letNewVars = 0;
 
         localsOffsetTable = new HashMap<>();
 
+        if (prevLocals != null) {
+            localsOffsetTable.putAll(prevLocals);
+            offset = -prevLocals.size() - 1;
+        }
+
         for (int i = 0; i < let.locals.size(); i++) {
             localsOffsetTable.put(let.locals.get(i).name.token.getText(), offset * 4);
+
+            if (abs(offset) > numberOfLocalVariables) {
+                numberOfLocalVariables++;
+                letNewVars++;
+            }
+
             offset--;
-            numberOfLocalVariables++;
             inits.add("e", let.locals.get(i).accept(this));
         }
 
+        st.add("localsOffset", letNewVars * 4);
         st.add("inits", inits);
         st.add("body", let.e.accept(this));
         localsOffsetTable = prevLocals;
@@ -605,22 +618,41 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
     @Override
     public ST visit(Case ccase) {
         int endCaseId = ++labelID;
+        var mainCaseSt = templates.getInstanceOf("case");
 
         // Hacky as hell, but sometimes a case can be called without a function and the only thing that
         // is a declaration context would be the class the function the case is called in.
-        fileName = new File(Compiler.fileNames.get(ccase.ctx.getParent().getParent())).getName();
+        ParserRuleContext ctx = ccase.ctx;
+
+        if (! (ctx instanceof CoolParser.ProgramContext)) {
+            while (!(ctx.getParent() instanceof CoolParser.ProgramContext))
+                ctx = ctx.getParent();
+        }
+
+        fileName = new File(Compiler.fileNames.get(ctx)).getName();
         addNewStrConst(fileName);
         var fileNameID = invStrTable.get(fileName);
+        int offset = -1;
 
         // Save previous locals and parse current case locals
         var prevLocals = localsOffsetTable;
+
         localsOffsetTable = new HashMap<>();
+
+        if (prevLocals != null) {
+            localsOffsetTable.putAll(prevLocals);
+            offset = -prevLocals.size() - 1;
+        }
 
         for (int i = 0; i < ccase.branchNames.size(); i++) {
             // Hack due to the way case works, the same variable is saved at the same location
             // and is merely interpreted as being different by the case
-            localsOffsetTable.put(ccase.branchNames.get(i).token.getText(), -4);
-            numberOfLocalVariables++;
+            localsOffsetTable.put(ccase.branchNames.get(i).token.getText(), offset * 4);
+
+            if (abs(offset) > numberOfLocalVariables) {
+                numberOfLocalVariables++;
+                mainCaseSt.add("alloc", templates.getInstanceOf("alloc_case"));
+            }
         }
 
         // Holds the StringBuilder and the difference between the class tags
@@ -671,10 +703,8 @@ public class CodeGenVisitor implements ASTVisitor<ST>{
         String result = bodies.stream().map(pair -> pair.a.toString()).collect(Collectors.joining());
 
         // Reset locals
-        numberOfLocalVariables = 0;
         localsOffsetTable = prevLocals;
 
-        var mainCaseSt = templates.getInstanceOf("case");
         mainCaseSt.add("expr", ccase.e.accept(this))
                 .add("id", ++labelID)
                 .add("endCaseID", endCaseId)

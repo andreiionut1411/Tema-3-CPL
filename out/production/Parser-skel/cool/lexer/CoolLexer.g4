@@ -132,7 +132,7 @@ CLOSED_PARANTHESIS: ')';
 
 // Comments
 SINGLE_LINE_COMMENT: '--' .*? ('\n' | EOF) -> skip;
-fragment NON_COMMENT: '(' ~'*' | '*' ~')' | ~[*()];
+fragment NON_COMMENT: '(' ~'*' | ~'(' '*' | '*' ~')' | ~'*' ')' | ~[*()];
 fragment COMMENT: '(*' NON_COMMENT*? '*)';
 BLOCK_COMMENT: (COMMENT | '(*' NON_COMMENT*? BLOCK_COMMENT (NON_COMMENT*? BLOCK_COMMENT)* NON_COMMENT*? '*)') -> skip;
 

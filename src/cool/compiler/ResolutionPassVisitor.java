@@ -66,6 +66,10 @@ public class ResolutionPassVisitor implements ASTVisitor<ClassSymbol> {
             crtScope = crtScope.getParent();
         }
 
+        if (crtScope == null) {
+            System.out.println(id.getScope());
+        }
+
         return (ClassSymbol) crtScope;
     }
 
@@ -198,6 +202,7 @@ public class ResolutionPassVisitor implements ASTVisitor<ClassSymbol> {
         var type1 = binaryOp.lhs.accept(this);
         var type2 = binaryOp.rhs.accept(this);
         var op = binaryOp.op.getText();
+
         String typeStr1 = null;
         String typeStr2 = null;
 
@@ -497,6 +502,8 @@ public class ResolutionPassVisitor implements ASTVisitor<ClassSymbol> {
 
             SymbolTable.error(wwhile.ctx, wwhile.cond.token, "While condition has type " + condTypeStr + " instead of Bool");
         }
+
+        wwhile.loopExpr.accept(this);
 
         return (ClassSymbol) SymbolTable.globals.idLookup("Object");
     }

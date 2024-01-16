@@ -21,7 +21,7 @@ public class Tester2 {
         var oldOut = System.out;
         var oldErr = System.err;
 
-        var total = 1;
+        var total = 0;
 
         var files = testDir.listFiles(filenameFilter);
         Arrays.sort(files);

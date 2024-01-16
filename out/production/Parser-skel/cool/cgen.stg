@@ -326,7 +326,7 @@ assign(storeValue, value) ::= <<
 >>
 
 let(localsOffset, inits, body) ::= <<
-    addiu $sp $sp -<localsOffset>
+    addiu $sp $sp -<localsOffset> # let locals alloc
 <inits>
 <body>
 >>
@@ -355,4 +355,183 @@ newSelfType() ::= <<
     addiu $sp $sp 4 # pop t1 from stack
     lw $t1 4($t1) # _init
     jalr $t1
+>>
+
+iff(condition, thenBranch, elseBranch, id) ::= <<
+<condition>
+    lw $t1 12($a0)     # bool slot
+    beqz $t1 else<id>
+<thenBranch>
+    b       endif<id>
+else<id>:
+<elseBranch>
+endif<id>:
+>>
+
+isVoid(expr, id) ::= <<
+<expr>
+    move    $t1 $a0
+    la      $a0 bool_const1
+    beqz    $t1 isvoid<id>
+    la      $a0 bool_const0
+isvoid<id>:
+>>
+
+nott(expr, id) ::= <<
+<expr>
+    lw      $t1 12($a0)     # bool slot
+    la      $a0 bool_const1
+    beqz    $t1 not<id>
+    la      $a0 bool_const0
+not<id>:
+>>
+
+plus(e1, e2) ::= <<
+<e1>
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+<e2>
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    add $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+>>
+
+minus(e1, e2) ::= <<
+<e1>
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+<e2>
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    sub $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+>>
+
+mult(e1, e2) ::= <<
+<e1>
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+<e2>
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    mul $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+>>
+
+div(e1, e2) ::= <<
+<e1>
+    sw $a0 0($sp)
+    addiu $sp $sp -4
+<e2>
+    jal Object.copy
+    lw $t1 4($sp)
+    addiu $sp $sp 4
+    lw $t1 12($t1)     # int slot
+    lw $t2 12($a0)     # int slot
+    div $t1 $t1 $t2
+    sw $t1 12($a0)     # int slot
+>>
+
+unaryMinus(e1) ::= <<
+<e1>
+    jal     Object.copy
+    lw      $t1 12($a0)     # int slot
+    neg     $t1 $t1
+    sw      $t1 12($a0)     # int slot
+>>
+
+eq(e1, e2, id) ::= <<
+<e1>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<e2>
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    move    $t2 $a0
+    la      $a0 bool_const1
+    beq     $t1 $t2 eq<id>
+    la      $a1 bool_const0
+    jal     equality_test
+eq<id>:
+>>
+
+lt(e1, e2, id) ::= <<
+<e1>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<e2>
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    blt     $t1 $t2 compare<id>
+    la      $a0 bool_const0
+compare<id>:
+>>
+
+le(e1, e2, id) ::= <<
+<e1>
+    sw      $a0 0($sp)
+    addiu   $sp $sp -4
+<e2>
+    lw      $t1 4($sp)
+    addiu   $sp $sp 4
+    lw      $t1 12($t1)     # int slot
+    lw      $t2 12($a0)     # int slot
+    la      $a0 bool_const1
+    ble     $t1 $t2 compare<id>
+    la      $a0 bool_const0
+compare<id>:
+>>
+
+while(condition, body, id) ::= <<
+while<id>:
+<condition>
+    lw      $t1 12($a0)     # bool slot
+    beqz    $t1 endwhile<id>
+<body>
+    b       while<id>
+endwhile<id>:
+    move    $a0 $zero
+>>
+
+caseBody(body, classTagMin, classTagMax, id, endCaseID) ::= <<
+    blt     $t1 <classTagMin> casebranch<id>
+    bgt     $t1 <classTagMax> casebranch<id>
+<body>
+    b       endcase<endCaseID>
+casebranch<id>:
+
+>>
+
+case(expr, bodies, id, endCaseID, fileNameID, line, alloc) ::= <<
+<alloc>
+    move    $s0 $a0
+<expr>
+    bnez    $a0 case<id>
+    la      $a0 str_const<fileNameID>
+    li      $t1 <line>
+    jal     _case_abort2
+case<id>:
+    sw      $a0 -4($fp)
+    lw      $t1 0($a0)      # class tag
+<bodies>
+    lw      $a0 -4($fp)
+    jal     _case_abort
+endcase<endCaseID>:
+>>
+
+alloc_case() ::= <<
+    addiu $sp $sp -4 # case locals alloc
 >>

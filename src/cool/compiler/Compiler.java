@@ -8,6 +8,7 @@ import cool.parser.*;
 import cool.structures.SymbolTable;
 
 import java.io.*;
+import java.util.List;
 
 
 public class Compiler {
@@ -45,18 +46,18 @@ public class Compiler {
             else
                 tokenStream.setTokenSource(lexer);
 
-            /*
-            // Test lexer only.
-            tokenStream.fill();
-            List<Token> tokens = tokenStream.getTokens();
-            tokens.stream().forEach(token -> {
-                var text = token.getText();
-                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
 
-                System.out.println(text + " : " + name);
-                //System.out.println(token);
-            });
-            */
+            // Test lexer only.
+//            tokenStream.fill();
+//            List<Token> tokens = tokenStream.getTokens();
+//            tokens.stream().forEach(token -> {
+//                var text = token.getText();
+//                var name = CoolLexer.VOCABULARY.getSymbolicName(token.getType());
+//
+//                System.out.println(text + " : " + name);
+//                //System.out.println(token);
+//            });
+
 
             // Parser
             if (parser == null)

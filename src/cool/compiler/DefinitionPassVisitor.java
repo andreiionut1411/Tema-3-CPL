@@ -191,6 +191,7 @@ public class DefinitionPassVisitor implements ASTVisitor {
 
     @Override
     public Object visit(NegativeInt negativeInt) {
+        negativeInt.e.accept(this);
         return null;
     }
 

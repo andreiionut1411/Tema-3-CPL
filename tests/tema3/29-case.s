@@ -703,7 +703,7 @@ Main.i:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
-    addiu   $sp $sp -4   # locals alloc
+    addiu $sp $sp -4 # case locals alloc
     move    $s0 $a0
     lw $a0 12($fp)
     bnez    $a0 case6
@@ -818,7 +818,7 @@ casebranch4:
     lw      $a0 -4($fp)
     jal     _case_abort
 endcase1:
-    addiu   $sp $sp 4    # locals free
+    addiu $sp $sp 4 # locals free
     lw $fp 12($sp)
     lw $s0 8($sp)
     lw $ra 4($sp)

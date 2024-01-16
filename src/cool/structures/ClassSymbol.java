@@ -123,7 +123,9 @@ public class ClassSymbol extends Symbol implements Scope{
             var funcSymbols = crtClass.getFuncSymbols();
             var attrSymbols = crtClass.getIdSymbols();
             ArrayList<String> funcNames = new ArrayList<>(funcSymbols.keySet());
+            ArrayList<String> attrNames = new ArrayList<>(attrSymbols.keySet());
             Collections.reverse(funcNames);
+            Collections.reverse(attrNames);
 
             for (var func: funcNames) {
                 if (definedMethods.contains(funcSymbols.get(func).getName())) {
@@ -145,7 +147,7 @@ public class ClassSymbol extends Symbol implements Scope{
                 classList.add(crtClass.name);
             }
 
-            for (var attr: attrSymbols.keySet()) {
+            for (var attr: attrNames) {
                 if (attrSymbols.get(attr).getName().equals("self")) {
                     continue;
                 }

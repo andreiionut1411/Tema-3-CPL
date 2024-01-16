@@ -326,7 +326,7 @@ assign(storeValue, value) ::= <<
 >>
 
 let(localsOffset, inits, body) ::= <<
-    addiu $sp $sp -<localsOffset>
+    addiu $sp $sp -<localsOffset> # let locals alloc
 <inits>
 <body>
 >>
@@ -515,8 +515,8 @@ casebranch<id>:
 
 >>
 
-case(expr, bodies, id, endCaseID, fileNameID, line) ::= <<
-    addiu   $sp $sp -4   # locals alloc
+case(expr, bodies, id, endCaseID, fileNameID, line, alloc) ::= <<
+<alloc>
     move    $s0 $a0
 <expr>
     bnez    $a0 case<id>
@@ -530,5 +530,8 @@ case<id>:
     lw      $a0 -4($fp)
     jal     _case_abort
 endcase<endCaseID>:
-    addiu   $sp $sp 4    # locals free
+>>
+
+alloc_case() ::= <<
+    addiu $sp $sp -4 # case locals alloc
 >>

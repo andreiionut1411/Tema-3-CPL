@@ -134,6 +134,7 @@ public class ClassPassVisitor implements ASTVisitor<Void>{
 
     @Override
     public Void visit(NegativeInt negativeInt) {
+        negativeInt.e.accept(this);
         return null;
     }
 

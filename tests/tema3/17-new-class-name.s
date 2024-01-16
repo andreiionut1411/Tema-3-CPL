@@ -629,7 +629,7 @@ Main.main:
     sw $ra 4($sp)
     addiu $fp $sp 4
     move $s0 $a0
-    addiu $sp $sp -4
+    addiu $sp $sp -4 # let locals alloc
     la $a0 F_protObj
     jal Object.copy
     jal F_init
